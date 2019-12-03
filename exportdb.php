@@ -30,6 +30,13 @@ $pass  = $argv[3];
 $dbsrc = $argv[4];
 $dbdst = $argv[5];
 
+if (count($argv) != 6){
+    die("numero di parametri errato \n "
+            . "USAGE: php exportdb.php host user password dbSource dbDestination \n "
+            . "EXAMPLE: php exportdb.php localhost arcoplex vt1g3r++CRM arcoplex_vtig486 arcoplex_staging");
+}
+
+
 unlink ('dbdst.routines.sql');
 unlink ('dbdst.view.sql');
 unlink ('dbdst.events.sql');
