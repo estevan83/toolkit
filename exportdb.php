@@ -1,4 +1,9 @@
 <?php
+
+
+
+
+
 // Nessun timeout per il cron
 set_time_limit(0);
 
@@ -10,16 +15,24 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 //error_reporting(E_ERROR);
 ini_set("display_errors", 1);
 
+// INPUT host, user, password, porta, dbsrc, dbdst
+// output  dbdst.view.sql
+// output  dbdst.routines.sql
+// output  dbdst.events.sql ----> TBD tadella forse events
 
 
-$host  = 'localhost';
-$user  = 'arcoplex';
-$pass  = 'vt1g3r++CRM';
 
-$dbsrc = 'arcoplex_vtig486';
-$dbdst = 'arcoplex_staging';
+//  php importProcedure.php localhost arcoplex+CRM arcoplex_vtig486 arcoplex_staging
+$host  = $argv[1];
+$user  = $argv[2];
+$pass  = $argv[3];
 
+$dbsrc = $argv[4];
+$dbdst = $argv[5];
 
+unlink ('dbdst.routines.sql');
+unlink ('dbdst.view.sql');
+unlink ('dbdst.events.sql');
 // Create connection
 $conn = new mysqli($host, $user, $pass);
 // Check connection
@@ -29,7 +42,6 @@ if ($conn->connect_error) {
 
 $sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."';";
 $result = $conn->query($sql);
-unlink ('QUERYGENERATE.txt');
 if ($result->num_rows > 0) {
 	
     // output data of each row
@@ -66,7 +78,7 @@ if ($result->num_rows > 0) {
 		// die($query);
 		//$row['params'] = $rws;
 		// $query = print_r($row,true);
-	//	file_put_contents('QUERYGENERATE.txt', $query .PHP_EOL, FILE_APPEND);
+		file_put_contents('dbdst.routines.sql', $query .PHP_EOL, FILE_APPEND);
 
 
     }
@@ -75,37 +87,24 @@ else{
 	die("no rows");
 }
 
-$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', 'arcoplex_staging.', TABLE_NAME, ';\n CREATE VIEW ', 'arcoplex_staging.', TABLE_NAME,' AS ', view_definition) , 'arcoplex_vtig486', 'arcoplex_staging') as vista FROM information_schema.views ";
+$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst .', TABLE_NAME, ';\n CREATE VIEW ', '$dbdst .', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views ";
 $res = $conn->query($sql);
 
 if ($res->num_rows > 0) {
 	
 	while($rw = $res->fetch_assoc()) {
-		file_put_contents('QUERYGENERATE.txt', $rw['vista'] .PHP_EOL, FILE_APPEND);
+		file_put_contents('dbdst.view.sql', $rw['vista'] .PHP_EOL, FILE_APPEND);
 	}
 	
 }
 
 
-/*
-foreach ($procedures as $procedure){
-	$sql = 'SHOW CREATE PROCEDURE '.$procedure;
-	
-	// die ($sql. '                  ');
-	$result = $conn->query($sql);
-	if (!$result){
-		die("error DC");
+$sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst .',event_name, ';\nCREATE EVENT ','$dbdst .',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
+$res = $conn->query($sql);
+if ($res->num_rows > 0) {
+	while($rw = $res->fetch_assoc()) {
+		file_put_contents('dbdst.events.sql', $rw['event'] .PHP_EOL, FILE_APPEND);
 	}
-	$row = $result->fetch_assoc();
-	die (print_r($row,true));
-	$tmp = $row['create procedure'];
-	die($tmp);
 }
-
-*/
-
-
-
-
 
 ?>
