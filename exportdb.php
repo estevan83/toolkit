@@ -93,7 +93,7 @@ else{
 	die("no rows");
 }
 
-$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst .', TABLE_NAME, ';\n CREATE VIEW ', '$dbdst .', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views ";
+$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst.', TABLE_NAME, ';\n CREATE VIEW ', '$dbdst.', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views ";
 $res = $conn->query($sql);
 
 if ($res->num_rows > 0) {
@@ -105,7 +105,7 @@ if ($res->num_rows > 0) {
 }
 
 
-$sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst .',event_name, ';\nCREATE EVENT ','$dbdst .',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
+$sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst.',event_name, ';\nCREATE EVENT ','$dbdst.',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
 $res = $conn->query($sql);
 if ($res->num_rows > 0) {
 	while($rw = $res->fetch_assoc()) {
