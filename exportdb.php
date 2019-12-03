@@ -31,15 +31,14 @@ $dbsrc = $argv[4];
 $dbdst = $argv[5];
 
 if (count($argv) != 6){
-    die("numero di parametri errato \n "
-            . "USAGE: php exportdb.php host user password dbSource dbDestination \n "
-            . "EXAMPLE: php exportdb.php localhost arcoplex vt1g3r++CRM arcoplex_vtig486 arcoplex_staging");
+    die("wrong number of arguments \n "
+            . "USAGE: php exportdb.php host user password dbSource dbDestination \n ");
 }
 
 
-unlink ('dbdst.routines.sql');
-unlink ('dbdst.view.sql');
-unlink ('dbdst.events.sql');
+unlink ($dbdst.'.routines.sql');
+unlink ($dbdst.'.view.sql');
+unlink ($dbdst.'.events.sql');
 // Create connection
 $conn = new mysqli($host, $user, $pass);
 // Check connection
@@ -85,7 +84,7 @@ if ($result->num_rows > 0) {
 		// die($query);
 		//$row['params'] = $rws;
 		// $query = print_r($row,true);
-		file_put_contents('dbdst.routines.sql', $query .PHP_EOL, FILE_APPEND);
+		file_put_contents($dbdst.'.routines.sql', $query .PHP_EOL, FILE_APPEND);
 
 
     }
@@ -100,7 +99,7 @@ $res = $conn->query($sql);
 if ($res->num_rows > 0) {
 	
 	while($rw = $res->fetch_assoc()) {
-		file_put_contents('dbdst.view.sql', $rw['vista'] .PHP_EOL, FILE_APPEND);
+		file_put_contents($dbdst.'.view.sql', $rw['vista'] .PHP_EOL, FILE_APPEND);
 	}
 	
 }
@@ -110,7 +109,7 @@ $sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst .',event_name, ';\nCREATE
 $res = $conn->query($sql);
 if ($res->num_rows > 0) {
 	while($rw = $res->fetch_assoc()) {
-		file_put_contents('dbdst.events.sql', $rw['event'] .PHP_EOL, FILE_APPEND);
+		file_put_contents($dbdst.'.events.sql', $rw['event'] .PHP_EOL, FILE_APPEND);
 	}
 }
 
