@@ -22,7 +22,8 @@ ini_set("display_errors", 1);
 
 
 
-//  php importProcedure.php localhost arcoplex+CRM arcoplex_vtig486 arcoplex_staging
+//   php exportdb.php localhost arcoplex vt1g3r++CRM arcoplex_vtig486 arcoplex_staging
+
 $host  = $argv[1];
 $user  = $argv[2];
 $pass  = $argv[3];
@@ -56,29 +57,45 @@ if ($result->num_rows > 0) {
 		$type = $row['routine_type'];
 		$name = $row['routine_name'];
 		$procedure = $row['routine_definition'];
-		$query = "DROP $type if exisxt $dbdst.$name;".PHP_EOL;
-		$query .= "DELIMITER $$".PHP_EOL;
+		$query  = "DELIMITER $$".PHP_EOL;
+		$query .= "DROP $type if exists $dbdst.$name;".PHP_EOL;
 		$query .= "CREATE $type $dbdst.$name(";
 		
 
-		$params = "select * FROM information_schema.PARAMETERS WHERE specific_name = '".$name."';";
+		$params = "select * FROM information_schema.PARAMETERS WHERE specific_name = '".$name."' and SPECIFIC_SCHEMA = '".$dbsrc."';";
 		$res = $conn->query($params);
 
 		if ($res->num_rows > 0) {
 			
 			while($rw = $res->fetch_assoc()) {
-				// die (print_r($rw,true));
+				
 				$inout = $rw['PARAMETER_MODE'];
 				$key = $rw['PARAMETER_NAME'];
-				$type = $rw['DATA_TYPE'];
+				$datatype = $rw['DATA_TYPE'];
 				$lenght = $rw['CHARACTER_MAXIMUM_LENGTH'];
-				$query .= $inout . ' ' . $key . ' ' . $type . ' (' . $lenght . '),'; 
+				if(!empty($inout)){
+				$query .= /*$inout . ' ' . */$key . ' ' . $datatype ;
+					if (is_numeric($lenght)){
+						$query .='('. $lenght. ')' ; 
+					}
+				$query .=', ';
+				}
+				else{
+					$return = ' returns ' . $datatype;
+					if (is_numeric($lenght)){
+						$return .='('. $lenght. ')' ; 
+					}
+				}
 				$rws[] = $rw;
 			}
-			$query = substr($query, 0, strlen($query)-1);
+			$query = substr($query, 0, strlen($query)-2);
         
 		}
-		$query .= ')'.PHP_EOL;
+		$query .= ')';
+		if ($type == 'FUNCTION'){
+			$query .=$return;
+		}
+		$query .= PHP_EOL;
 		$query .= $procedure;
 		$query .= '$$'.PHP_EOL;
 		// die($query);
