@@ -16,7 +16,7 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 ini_set("display_errors", 1);
 
 $drop = true; // se sono false ci metti davanti il commento
-$create = false; // se vale false ci metti il commento
+$create = true; // se vale false ci metti il commento
 
 // INPUT host, user, password, porta, dbsrc, dbdst
 // output  dbdst.view.sql
@@ -35,13 +35,16 @@ $dbsrc = $argv[4];
 $dbdst = $argv[5];
 
 if (count($argv) != 6){
-    die("wrong number of arguments \n "
-            . "USAGE: php exportdb.php host user password dbSource dbDestination \n ");
+    die("Wrong number of arguments \n "
+            . "USAGE: php exportdb.php host user password dbSource dbDestination \n "
+			. "mysql -h host -u user -p'password' database \n "
+			. "source database.[views|routines|events].sql \n"
+	);
 }
 
 
 @unlink ($dbdst.'.routines.sql');
-@unlink ($dbdst.'.view.sql');
+@unlink ($dbdst.'.views.sql');
 @unlink ($dbdst.'.events.sql');
 // Create connection
 $conn = new mysqli($host, $user, $pass);
@@ -153,7 +156,7 @@ if ($res->num_rows > 0) {
 			$comment[1] = '-- '. $comment[1];
 		}
 		$vista = $comment[0] .$comment[1];
-		file_put_contents($dbdst.'.view.sql', $vista .PHP_EOL, FILE_APPEND);
+		file_put_contents($dbdst.'.views.sql', $vista .PHP_EOL, FILE_APPEND);
 	}
 	
 }
