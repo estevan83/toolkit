@@ -15,6 +15,9 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 //error_reporting(E_ERROR);
 ini_set("display_errors", 1);
 
+$drop = true; // se sono false ci metti davanti il commento
+$create = false; // se vale false ci metti il commento
+
 // INPUT host, user, password, porta, dbsrc, dbdst
 // output  dbdst.view.sql
 // output  dbdst.routines.sql
@@ -37,9 +40,9 @@ if (count($argv) != 6){
 }
 
 
-unlink ($dbdst.'.routines.sql');
-unlink ($dbdst.'.view.sql');
-unlink ($dbdst.'.events.sql');
+@unlink ($dbdst.'.routines.sql');
+@unlink ($dbdst.'.view.sql');
+@unlink ($dbdst.'.events.sql');
 // Create connection
 $conn = new mysqli($host, $user, $pass);
 // Check connection
@@ -47,7 +50,8 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."';";
+$sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' ;";
+// and (routine_name = 'html_UnEncode' or routine_name ='update_synchro_maps')
 $result = $conn->query($sql);
 if ($result->num_rows > 0) {
 	
@@ -57,47 +61,70 @@ if ($result->num_rows > 0) {
 		$type = $row['routine_type'];
 		$name = $row['routine_name'];
 		$procedure = $row['routine_definition'];
-		$query  = "DELIMITER $$".PHP_EOL;
-		$query .= "DROP $type if exists $dbdst.$name;".PHP_EOL;
-		$query .= "CREATE $type $dbdst.$name(";
+
 		
 
-		$params = "select * FROM information_schema.PARAMETERS WHERE specific_name = '".$name."' and SPECIFIC_SCHEMA = '".$dbsrc."';";
-		$res = $conn->query($params);
-
-		if ($res->num_rows > 0) {
+		$query = '';
+		/*if (!$drop && !$create){
+			$query .= '/*';
+		}*/
+		if ($create){
+			$query .= "DELIMITER $$".PHP_EOL;
+		}
+		
+		if ($drop){
+			$query .= "DROP $type if exists $dbdst.$name;".PHP_EOL;
+		}
+		
+		
+		
+		
+		if ($create){
+		
+			$query .= "CREATE $type $dbdst.$name(";
 			
-			while($rw = $res->fetch_assoc()) {
+
+			$params = "select * FROM information_schema.PARAMETERS WHERE specific_name = '".$name."' and SPECIFIC_SCHEMA = '".$dbsrc."';";
+			$res = $conn->query($params);
+
+			if ($res->num_rows > 0) {
 				
-				$inout = $rw['PARAMETER_MODE'];
-				$key = $rw['PARAMETER_NAME'];
-				$datatype = $rw['DATA_TYPE'];
-				$lenght = $rw['CHARACTER_MAXIMUM_LENGTH'];
-				if(!empty($inout)){
-				$query .= /*$inout . ' ' . */$key . ' ' . $datatype ;
-					if (is_numeric($lenght)){
-						$query .='('. $lenght. ')' ; 
+				while($rw = $res->fetch_assoc()) {
+					
+					$inout = $rw['PARAMETER_MODE'];
+					$key = $rw['PARAMETER_NAME'];
+					$datatype = $rw['DATA_TYPE'];
+					$lenght = $rw['CHARACTER_MAXIMUM_LENGTH'];
+					if(!empty($inout)){
+					$query .= /*$inout . ' ' . */$key . ' ' . $datatype ;
+						if (is_numeric($lenght)){
+							$query .='('. $lenght. ')' ; 
+						}
+					$query .=', ';
 					}
-				$query .=', ';
-				}
-				else{
-					$return = ' returns ' . $datatype;
-					if (is_numeric($lenght)){
-						$return .='('. $lenght. ')' ; 
+					else{
+						$return = 'returns ' . $datatype.' ';
+						if (is_numeric($lenght)){
+							$return .='('. $lenght. ')' ; 
+						}
 					}
+					$rws[] = $rw;
 				}
-				$rws[] = $rw;
+				$query = substr($query, 0, strlen($query)-2);
+			
 			}
-			$query = substr($query, 0, strlen($query)-2);
-        
+			$query .= ') ';
+			if ($type == 'FUNCTION'){
+				$query .=$return;
+			}
+			$query .= PHP_EOL;
+			$query .= $procedure;
+			$query .= '$$'.PHP_EOL;
+		
 		}
-		$query .= ')';
-		if ($type == 'FUNCTION'){
-			$query .=$return;
-		}
-		$query .= PHP_EOL;
-		$query .= $procedure;
-		$query .= '$$'.PHP_EOL;
+	/*	if (!$create){
+			$query .= '';
+		}*/
 		// die($query);
 		//$row['params'] = $rws;
 		// $query = print_r($row,true);
@@ -110,23 +137,42 @@ else{
 	die("no rows");
 }
 
-$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst.', TABLE_NAME, ';\n CREATE VIEW ', '$dbdst.', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views ";
+$sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst.', TABLE_NAME, ';\n!_!_!CREATE VIEW ', '$dbdst.', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views where TABLE_SCHEMA ='".$dbsrc."'";
 $res = $conn->query($sql);
 
 if ($res->num_rows > 0) {
 	
 	while($rw = $res->fetch_assoc()) {
-		file_put_contents($dbdst.'.view.sql', $rw['vista'] .PHP_EOL, FILE_APPEND);
+		$comment = explode('!_!_!', $rw['vista'] );
+		if (!$drop){
+			$comment[0] = '-- '. $comment[0];
+		}
+		
+		if (!$create){
+			
+			$comment[1] = '-- '. $comment[1];
+		}
+		$vista = $comment[0] .$comment[1];
+		file_put_contents($dbdst.'.view.sql', $vista .PHP_EOL, FILE_APPEND);
 	}
 	
 }
 
 
-$sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst.',event_name, ';\nCREATE EVENT ','$dbdst.',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
+$sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst.',event_name, ';\n!_!_!CREATE EVENT ','$dbdst.',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
 $res = $conn->query($sql);
 if ($res->num_rows > 0) {
 	while($rw = $res->fetch_assoc()) {
-		file_put_contents($dbdst.'.events.sql', $rw['event'] .PHP_EOL, FILE_APPEND);
+		$comment = explode('!_!_!', $rw['event'] );
+		if (!$drop){
+			$comment[0] = '-- '. $comment[0];
+		}
+		
+		if (!$create){
+			$comment[1] = '-- '. $comment[1];
+		}
+		$event = $comment[0].$comment[1];
+		file_put_contents($dbdst.'.events.sql',$event.PHP_EOL, FILE_APPEND);
 	}
 }
 
