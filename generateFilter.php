@@ -9,7 +9,7 @@ global $adb;
 
 $tables = array ('vtiger_customview', 'vtiger_cvadvfilter', 'vtiger_cvadvfilter_grouping', 'vtiger_cvcolumnlist', 'vtiger_cvstdfilter');
 
-$cvid  = 4;// $argv[1];
+$cvid  = $argv[1];
 
 try{
     foreach ($tables as $table){
