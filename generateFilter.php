@@ -66,29 +66,25 @@ function makeRecoverySQL($table,$cvidfrom,$cvidto)
 	global $adb;
 	
     $sql = "SELECT * FROM " . $table . " WHERE cvid = ?";
-	$params = array($cvidfrom);
+    $params = array($cvidfrom);
 	$result = $adb->pquery($sql, $params);
         
-        if(!$result){
-            throw new Exception($adb->database->ErrorMsg(), $adb->database->ErrorNo());
-         }
+    if(!$result){
+        throw new Exception($adb->database->ErrorMsg(), $adb->database->ErrorNo());
+    }
 
-	$row = $adb->fetchByAssoc($result);
-
-    if ($row == null)
+    $insertSQL = '-- '. $table . '['.$adb->num_rows($result).' rows] ' .PHP_EOL;
+    while($row = $adb->fetchByAssoc($result))
     {
-        return;
-    }
-
-	$insertSQL = '-- '. $table . PHP_EOL;
-    $insertSQL .= "INSERT INTO " . $table . " SET ";
-    foreach ($row as $field => $value) {
-        if($field == 'cvid'){
-            $value = $cvidto;
+        $insertSQL .= "INSERT INTO " . $table . " SET ";
+        foreach ($row as $field => $value) {
+            if($field == 'cvid'){
+                $value = $cvidto;
+            }
+            $insertSQL .= " " . $field . " = '" . $value . "', ";
         }
-        $insertSQL .= " " . $field . " = '" . $value . "', ";
+        $insertSQL = trim($insertSQL, ", ");
+        $insertSQL .= ';'.PHP_EOL;
     }
-    $insertSQL = trim($insertSQL, ", ");
-    $insertSQL .= ';'.PHP_EOL.PHP_EOL;
-    return $insertSQL;
+    return $insertSQL.PHP_EOL;
 }
