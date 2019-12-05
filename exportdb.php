@@ -1,9 +1,5 @@
 <?php
 
-
-
-
-
 // Nessun timeout per il cron
 set_time_limit(0);
 
@@ -22,8 +18,6 @@ $create = true; // se vale false ci metti il commento
 // output  dbdst.view.sql
 // output  dbdst.routines.sql
 // output  dbdst.events.sql ----> TBD tadella forse events
-
-
 
 //   php exportdb.php localhost arcoplex vt1g3r++CRM arcoplex_vtig486 arcoplex_staging
 
@@ -78,9 +72,7 @@ if ($result->num_rows > 0) {
 		if ($drop){
 			$query .= "DROP $type if exists $dbdst.$name;".PHP_EOL;
 		}
-		
-		
-		
+
 		
 		if ($create){
 		
@@ -178,9 +170,3 @@ if ($res->num_rows > 0) {
 		file_put_contents($dbdst.'.events.sql',$event.PHP_EOL, FILE_APPEND);
 	}
 }
-
-
-
-
-
-?>

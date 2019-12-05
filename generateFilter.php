@@ -1,6 +1,6 @@
 <?php
 
-
+chdir('..');
 
 // Nessun timeout per il cron
 set_time_limit(0);
