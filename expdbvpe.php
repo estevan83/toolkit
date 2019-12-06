@@ -30,7 +30,7 @@ $dbdst = $argv[5];
 
 if (count($argv) != 6){
     die("Wrong number of arguments \n "
-            . "USAGE: php exportdb.php host user password dbSource dbDestination \n "
+            . "USAGE: php ". $argv[0] . " host user password dbSource dbDestination \n "
 			. "mysql -h host -u user -p'password' database \n "
 			. "source database.[views|routines|events].sql \n"
 	);
