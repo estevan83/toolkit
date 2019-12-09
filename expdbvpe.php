@@ -4,7 +4,7 @@
 set_time_limit(0);
 
 if (substr(php_sapi_name(), 0, 3 ) != "cli" && (substr(php_sapi_name(), 0, 3 ) != "cgi" )) {
-    die("ALGOMA MASSIVE IMPORT TOOLKIT must runs from console");
+    die("ALGOMA DV EXPORT (views procedure and events) must runs from console");
 }
 
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
