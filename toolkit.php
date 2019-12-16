@@ -11,7 +11,7 @@ include_once 'include/utils/utils.php';
 // Nessun timeout per il cron
 set_time_limit(0);
 
-if (substr(php_sapi_name(), 0, 3 ) != "cli" && (substr(php_sapi_name(), 0, 3 ) != "cgi" )) {
+if (substr(php_sapi_name(), 0, 3 ) != "cli" /*&& (substr(php_sapi_name(), 0, 3 ) != "cgi" )*/) {
     die("ALGOMA TOOLKIT must runs from console");
 }
 
@@ -44,6 +44,9 @@ class toolKit{
 		echo ("Digita 4 per effetturare il salvataggio delle routine (function e procedure) ".PHP_EOL);
 		echo ("Digita 5 per effetturare il salvataggio delle viste ".PHP_EOL);
 		echo ("Digita 6 per effetturare il salvataggio degli eventi ".PHP_EOL);
+		echo ("Digita 7 per muovere o rinominare un campo ".PHP_EOL);
+		echo ("Digita 8 per resettare il cron ".PHP_EOL);
+		echo ("Digita 9 per eseguire del codice SQL ".PHP_EOL);
 		return;
 	}
 	
@@ -81,8 +84,17 @@ class toolKit{
 			case 5 : 	
 						$this->importViste(); 
 						break;
-				case 6 : 	
-						$this->importEvent(); 
+			case 6 : 	
+                                                $this->importEvent(); 
+                                                break;
+			case 7 : 	
+                                                $this->mvField(); 
+                                                break;
+			case 8:
+						$this->resetCron();
+						break;
+			case 9:
+						$this->runSqlCode();
 						break;
 						
 						
@@ -90,7 +102,6 @@ class toolKit{
 						
 						
 			default :
-						echo ("Selezionare un opzione disponibile".PHP_EOL);
 						$this->endFunction();
 						break;
 		}
@@ -99,26 +110,104 @@ class toolKit{
 	
 	
 	
-	
-	
-	protected function databaseBackup(){
-		echo ("INIZIO BACKUP DEL DATABASE: {$this->dbconfig['db_name']}".PHP_EOL);
-		
-		$date = date('Ymd_His');
-
-		$cmd="mysqldump --user={$this->dbconfig['db_username']} --password='{$this->dbconfig['db_password'] }' --host={$this->dbconfig['db_server']} {$this->dbconfig['db_name']} --result-file=toolkit/{$this->dbconfig['db_name']}.$date.sql";
-		echo "Running...". PHP_EOL . $cmd. PHP_EOL;
-
-		exec($cmd);
-
-		echo "DONE" . PHP_EOL;
-		
-		$this->endFunction();
+	protected function runSqlCode(){
+            echo ("INSERISCI CREDENZIALI DEL DATABASE".PHP_EOL);
+            echo ("HOST".PHP_EOL);
+            $host = trim(fgets(STDIN));
+            echo ("USER".PHP_EOL);
+            $user = trim(fgets(STDIN));
+            echo ("PASSWORD".PHP_EOL);
+            $pass = trim(fgets(STDIN));
+            echo ("###IL FILE DOVRÀ CONTENERE 'USE [nome_database];' ###".PHP_EOL);
+            echo ("NOME DEL FILE .sql".PHP_EOL);
+            $file = trim(fgets(STDIN));
+            $sql = file_get_contents('toolkit/'.$file);
+            $cmd = "mysql -u {$user} -p'{$pass}' -h {$host} -e '{$sql}'";
+            echo ("EXECUTING SQL ... $sql".PHP_EOL);
+            exec($cmd);
+            $this->endFunction();
 	}
 	
 	
 	
 	
+	
+	
+	protected function mvField(){
+            $file = 'toolkit/mvrnField.txt';
+            @unlink($file);
+            echo ("INSERISCI NOME DEL DB IN CUI VERRANNO FATTE LE OPERAZIONI".PHP_EOL);
+            $db = trim(fgets(STDIN));
+            echo ("INSERISCI NOME DEL CAMPO DA SPOSTARE".PHP_EOL);
+            $fieldSRC = trim(fgets(STDIN));
+            echo ("INSERISCI IL TIPO DI DATO DEL CAMPO".PHP_EOL);
+            $typeOfData = trim(fgets(STDIN));
+            echo ("INSERISCI NOME DELLA TABELLA DOVE SI TROVA IL CAMPO".PHP_EOL);
+            $tableSRC = trim(fgets(STDIN));
+            echo ("INSERISCI IL CAMPO UNIVOCO DELA TABELLA SORGENTE".PHP_EOL);
+            $keySRC = trim(fgets(STDIN));
+            echo ("INSERISCI NOME CHE AVRÀ IL CAMPO".PHP_EOL);
+            $fieldDST = trim(fgets(STDIN));
+            echo ("INSERISCI NOME DELLA TABELLA DOVE VERRÀ CREATO IL CAMPO".PHP_EOL);
+            $tableDST = trim(fgets(STDIN));
+            echo ("INSERISCI IL CAMPO UNIVOCO DELA TABELLA DI DESTINAZIONE".PHP_EOL);
+            $keyDST = trim(fgets(STDIN));
+            
+            $query = "UPDATE {$db}.vtiger_field SET columnname='{$fieldDST}', tablename='{$tableDST}', fieldname='{$fieldDST}' WHERE columnname='{$fieldSRC}' and tablename='{$tableSRC}';".PHP_EOL;
+
+            $query .= "ALTER TABLE {$db}.{$tableDST} ADD COLUMN {$fieldDST} {$typeOfData};".PHP_EOL;
+
+            $query .= "UPDATE {$db}.{$tableDST} INNER JOIN {$db}.{$tableSRC} ON {$tableDST}.{$keyDST} = {$tableSRC}.{$keySRC} SET {$tableDST}.{$fieldDST} = {$tableSRC}.{$fieldSRC};".PHP_EOL;
+
+            $query .= "ALTER TABLE {$db}.{$tableSRC} DROP COLUMN {$fieldSRC};".PHP_EOL;
+            
+            file_put_contents($file, $query);
+	
+            $this->endFunction();
+        }
+	
+	
+	
+	protected function databaseBackup(){
+            echo ("INIZIO BACKUP DEL DATABASE: {$this->dbconfig['db_name']}".PHP_EOL);
+
+            $date = date('Ymd_His');
+            echo ("INSERISCI NOME FILE DOVE VERRÀ SALVATO IL FILE es backup ##Non mettere Estensioni##".PHP_EOL);
+            $file ='toolkit/'. trim(fgets(STDIN)).$date.'.sql';
+
+            echo ("DIGITA 1 PER SALVARE IL BACKUP IN FORMATO ZIP".PHP_EOL);
+            $zip = trim(fgets(STDIN));
+
+
+            $date = date('Ymd_His');
+
+            $cmd="mysqldump --user={$this->dbconfig['db_username']} --password='{$this->dbconfig['db_password'] }' --host={$this->dbconfig['db_server']} {$this->dbconfig['db_name']} --result-file={$file}";
+            if(intval($zip) == 1){
+                    $cmd .= "&& zip {$file}.zip {$file}";	
+            }
+            echo "Running...". PHP_EOL . $cmd. PHP_EOL;
+
+            exec($cmd);
+
+            echo "DONE" . PHP_EOL;
+
+            $this->endFunction();
+	}
+	
+	
+	
+	protected function resetCron(){
+            echo ("RESET CRON DEL DATABASE: {$this->dbconfig['db_name']}".PHP_EOL);
+            echo ("INSERISCI IL NOME DEL CRON DA RESETTARE".PHP_EOL);
+            $cronName = trim(fgets(STDIN));
+            $query = "update vtiger_cron_task set laststart=0, lastend = 0, status=1 where name = '{$cronName}' ";
+            $password = "'{$this->dbconfig['db_password']}'";
+            $cmd = 'mysql -u '.$this->dbconfig['db_username'].' -h '.$this->dbconfig['db_server'].' -p'.$password.' '.$this->dbconfig['db_name'].' -e "'.$query.'" && sh cron/vtigercron.sh';
+            exec($cmd);
+
+            echo "DONE" . PHP_EOL;
+            $this->endFunction();
+        }
 	
 	
 	
@@ -257,9 +346,23 @@ class toolKit{
 	
 	
 	
-	
-	
-	
+	protected function checkData($conn, $dbsrc, $definer, $file){
+		$sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' and definer != '".$definer."';";
+		// and (routine_name = 'html_UnEncode' or routine_name ='update_synchro_maps')
+		echo ("EXECUTING SQL ... $sql".PHP_EOL);
+		$result = $conn->query($sql);
+	// 	echo ("ROW FOUNDED : ".$result->num_rows);
+	//	echo (PHP_EOL);
+		file_put_contents($file, '/* SKIPPED ROUTINES... ->' .PHP_EOL, FILE_APPEND);
+		if ($result->num_rows > 0) {
+				// output data of each row
+				while($row = $result->fetch_assoc()) {
+					$query = $row['routine_name'];
+					file_put_contents($file, $query .PHP_EOL, FILE_APPEND);
+				}
+		}
+		file_put_contents($file, '*/' .PHP_EOL, FILE_APPEND);
+	}
 	
 	
 	
@@ -316,13 +419,15 @@ class toolKit{
 			$drop = true; 
 			$create = true;
 		}
+		$definer=$user.'@'.$host;
 		// Create connection
 		$conn = new mysqli($host, $user, $pass);
 		// Check connection
 		if ($conn->connect_error) {
 			die("Connection failed: " . $conn->connect_error);
 		}
-		$sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' ;";
+		$this->checkData($conn, $dbsrc, $definer, $file);
+		$sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' and definer = '".$definer."';";
 		// and (routine_name = 'html_UnEncode' or routine_name ='update_synchro_maps')
 		echo ("EXECUTING SQL ... $sql".PHP_EOL);
 		$result = $conn->query($sql);
@@ -616,17 +721,6 @@ class toolKit{
 
 	
 }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 }
 
