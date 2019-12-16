@@ -15,7 +15,7 @@ include_once 'modules/Users/Users.php';
 include_once 'modules/Emails/mail.php';
 include_once 'include/utils/utils.php';
 
-
+global $adb;
 // Nessun timeout per il cron
 set_time_limit(0);
 
@@ -30,7 +30,7 @@ echo ("SELEZIONA COSA VUOI FARE".PHP_EOL);
 
 
 
-$a = new toolKit($dbconfig, $root);
+$a = new toolKit($dbconfig,$adb, $root);
 $a->selectValue();
 
 
@@ -42,10 +42,9 @@ class toolKit{
 	protected $root;
 	
 	
-	function __construct($dbconfig, $root){
+	function __construct($dbconfig , $adb , $root){
 		$this->dbconfig = $dbconfig;
-		global $adb;
-		$this->db = $adb;
+		$this->adb = $adb;
 		$this->root = $root;
 	}
 	
@@ -61,6 +60,9 @@ class toolKit{
 		echo ("Digita 8 per resettare il cron ".PHP_EOL);
 		echo ("Digita 9 per eseguire del codice SQL ".PHP_EOL);
 		echo ("Digita 10 per eliminare tutte le tabelle del DB ".PHP_EOL);
+		
+		echo (PHP_EOL);
+		echo ("Digita cntr + c per uscire ".PHP_EOL);
 		return;
 	}
 	
@@ -127,6 +129,8 @@ class toolKit{
 	
 	
 	protected function generateTruncate(){
+	//	print_r($this->adb);
+	//	die("finito");
 		$db = $this->dbconfig['db_name'];
 		echo ("PREPARAZIONE SCRIPT PER ELIMINARE TUTTE LE TABELLE DAL DATABASE: {$db}".PHP_EOL);
 		$file = "{$this->root}/droptablefrom_{$db}.sql";
@@ -134,16 +138,29 @@ class toolKit{
 		$truncate = "SELECT 'SET FOREIGN_KEY_CHECKS = 0;' as schemaresult 
 					union
 					SELECT
-						CONCAT('DROP TABLE  ', '{$db}','.',TABLE_NAME,';')
+						CONCAT('DROP TABLE  ', '{$db}','.',TABLE_NAME,';') as schemaresult 
 
 					FROM
 						information_schema.tables
 
 					WHERE
-						table_schema = '{$db}'
+						table_schema = ? 
 					UNION
-					SELECT 'SET FOREIGN_KEY_CHECKS = 1'";
-		file_put_contents($file, $truncate);
+					SELECT 'SET FOREIGN_KEY_CHECKS = 1;' as schemaresult ";
+		
+		$result = $this->adb->pquery($truncate, array($db));
+		
+		if(!$result){
+			// echo($this->adb->database->ErrorMsg());
+			throw new Exception($this->adb->database->ErrorMsg(), $this->adb->database->ErrorNo());
+		}
+		while($row = $this->adb->fetchByAssoc($result)){
+			// {$db}echo ("arrivato");
+			// die(print_r($row, true));
+		   $query .= $row['schemaresult'].PHP_EOL;
+		}
+
+		file_put_contents($file, $query);
 		$this->endFunction();
 	}
 	
@@ -773,17 +790,5 @@ class toolKit{
 
 	
 }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }
 
