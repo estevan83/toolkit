@@ -85,11 +85,11 @@ class toolKit{
 						$this->importViste(); 
 						break;
 			case 6 : 	
-                                                $this->importEvent(); 
-                                                break;
+									$this->importEvent(); 
+									break;
 			case 7 : 	
-                                                $this->mvField(); 
-                                                break;
+									$this->mvField(); 
+									break;
 			case 8:
 						$this->resetCron();
 						break;
@@ -111,21 +111,29 @@ class toolKit{
 	
 	
 	protected function runSqlCode(){
-            echo ("INSERISCI CREDENZIALI DEL DATABASE".PHP_EOL);
-            echo ("HOST".PHP_EOL);
-            $host = trim(fgets(STDIN));
-            echo ("USER".PHP_EOL);
-            $user = trim(fgets(STDIN));
-            echo ("PASSWORD".PHP_EOL);
-            $pass = trim(fgets(STDIN));
-            echo ("###IL FILE DOVRÀ CONTENERE 'USE [nome_database];' ###".PHP_EOL);
-            echo ("NOME DEL FILE .sql".PHP_EOL);
-            $file = trim(fgets(STDIN));
-            $sql = file_get_contents('toolkit/'.$file);
-            $cmd = "mysql -u {$user} -p'{$pass}' -h {$host} -e '{$sql}'";
-            echo ("EXECUTING SQL ... $sql".PHP_EOL);
-            exec($cmd);
-            $this->endFunction();
+		echo ("INSERISCI CREDENZIALI DEL DATABASE".PHP_EOL);
+		echo ("HOST".PHP_EOL);
+		$host = trim(fgets(STDIN));
+		echo ("USER".PHP_EOL);
+		$user = trim(fgets(STDIN));
+		echo ("PASSWORD".PHP_EOL);
+		$pass = trim(fgets(STDIN));
+		echo ("###IL FILE DOVRÀ CONTENERE 'USE [nome_database];' ###".PHP_EOL);
+		echo ("NOME DEL FILE .sql".PHP_EOL);
+		$file = trim(fgets(STDIN));
+		
+		
+		$sql = file_get_contents('toolkit/'.$file);
+		// Check connection
+		
+		
+		$cmd = "mysql -u {$user} -p'{$pass}' -h {$host} -e '{$sql}'";
+//		die ("sql: ".$cmd);
+		
+		echo ("EXECUTING SQL ... $sql".PHP_EOL);
+		
+		exec($cmd);
+        $this->endFunction();
 	}
 	
 	
@@ -169,29 +177,29 @@ class toolKit{
 	
 	
 	protected function databaseBackup(){
-            echo ("INIZIO BACKUP DEL DATABASE: {$this->dbconfig['db_name']}".PHP_EOL);
+		echo ("INIZIO BACKUP DEL DATABASE: {$this->dbconfig['db_name']}".PHP_EOL);
+		
+		$date = date('Ymd_His');
+		echo ("INSERISCI NOME FILE DOVE VERRÀ SALVATO IL FILE es backup ##Non mettere Estensioni##".PHP_EOL);
+        $file ='toolkit/'. trim(fgets(STDIN)).$date.'.sql';
+		
+		echo ("DIGITA 1 PER SALVARE IL BACKUP IN FORMATO ZIP".PHP_EOL);
+        $zip = trim(fgets(STDIN));
+		
+		
+		$date = date('Ymd_His');
 
-            $date = date('Ymd_His');
-            echo ("INSERISCI NOME FILE DOVE VERRÀ SALVATO IL FILE es backup ##Non mettere Estensioni##".PHP_EOL);
-            $file ='toolkit/'. trim(fgets(STDIN)).$date.'.sql';
+		$cmd="mysqldump --user={$this->dbconfig['db_username']} --password='{$this->dbconfig['db_password'] }' --host={$this->dbconfig['db_server']} {$this->dbconfig['db_name']} --result-file={$file}";
+		if(intval($zip) == 1){
+			$cmd .= "&& zip {$file}.zip {$file}";	
+		}
+		echo "Running...". PHP_EOL . $cmd. PHP_EOL;
 
-            echo ("DIGITA 1 PER SALVARE IL BACKUP IN FORMATO ZIP".PHP_EOL);
-            $zip = trim(fgets(STDIN));
+		exec($cmd);
 
-
-            $date = date('Ymd_His');
-
-            $cmd="mysqldump --user={$this->dbconfig['db_username']} --password='{$this->dbconfig['db_password'] }' --host={$this->dbconfig['db_server']} {$this->dbconfig['db_name']} --result-file={$file}";
-            if(intval($zip) == 1){
-                    $cmd .= "&& zip {$file}.zip {$file}";	
-            }
-            echo "Running...". PHP_EOL . $cmd. PHP_EOL;
-
-            exec($cmd);
-
-            echo "DONE" . PHP_EOL;
-
-            $this->endFunction();
+		echo "DONE" . PHP_EOL;
+		
+		$this->endFunction();
 	}
 	
 	
@@ -203,10 +211,11 @@ class toolKit{
             $query = "update vtiger_cron_task set laststart=0, lastend = 0, status=1 where name = '{$cronName}' ";
             $password = "'{$this->dbconfig['db_password']}'";
             $cmd = 'mysql -u '.$this->dbconfig['db_username'].' -h '.$this->dbconfig['db_server'].' -p'.$password.' '.$this->dbconfig['db_name'].' -e "'.$query.'" && sh cron/vtigercron.sh';
-            exec($cmd);
+			exec($cmd);
 
-            echo "DONE" . PHP_EOL;
-            $this->endFunction();
+			echo "DONE" . PHP_EOL;
+file_put_contents('prova.txt', $cmd);
+			$this->endFunction();
         }
 	
 	
@@ -396,14 +405,14 @@ class toolKit{
 		echo ("DIGITA 3 PER SCRIVERE SOLOI CREATE".PHP_EOL);
 		$input = trim(fgets(STDIN));
 		
-		/* DA CANCELLARE SOLO PER TEST*/
+		/* DA CANCELLARE SOLO PER TEST
 		$host = 'localhost';
 		$user = 'atalanta';
 
                 $pass = 'Ribo2019!';
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
-		$input = '1';
+		$input = '1';*/
 		$file = 'toolkit/'.$dbdst.'.routines.sql';
 		@unlink($file);
 		
@@ -562,14 +571,14 @@ class toolKit{
 		echo ("DIGITA 3 PER SCRIVERE SOLOI CREATE".PHP_EOL);
 		$input = trim(fgets(STDIN));
 		
-		/* DA CANCELLARE SOLO PER TEST*/
+		/* DA CANCELLARE SOLO PER TEST
 		$host = 'localhost';
 		$user = 'atalanta';
 
                 $pass = 'Ribo2019!';
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
-		$input = '1';
+		$input = '1';*/
 		$file = 'toolkit/'.$dbdst.'.views.sql';
 		@unlink($file);
 		
@@ -658,14 +667,14 @@ class toolKit{
 		echo ("DIGITA 3 PER SCRIVERE SOLOI CREATE".PHP_EOL);
 		$input = trim(fgets(STDIN));
 		
-		/* DA CANCELLARE SOLO PER TEST*/
+		/* DA CANCELLARE SOLO PER TEST
 		$host = 'localhost';
 		$user = 'atalanta';
 
                 $pass = 'Ribo2019!';
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
-		$input = '1';
+		$input = '1';*/
 		$file  = 'toolkit/'.$dbdst.'.events.sql';
 		@unlink($file);
 		
@@ -721,6 +730,17 @@ class toolKit{
 
 	
 }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 }
 
