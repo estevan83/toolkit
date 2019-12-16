@@ -304,7 +304,7 @@ class toolKit{
 	protected function makeRecoveryFilterSQL($table,$cvidfrom,$cvidto)
 	{
 		// get the record          
-		$adb = $this->db;
+		$adb = $this->adb;
 		
 		$sql = "SELECT * FROM " . $table . " WHERE cvid = ?";
 		$params = array($cvidfrom);
@@ -374,7 +374,7 @@ class toolKit{
 	protected function makeRecoveryWorkflowSQL($table,$cvidfrom,$cvidto)
 	{
 		// get the record          
-		$adb = $this->db;
+		$adb = $this->adb;
 		
 		$sql = "SELECT * FROM " . $table . " WHERE workflow_id = ?";
 		$params = array($cvidfrom);
