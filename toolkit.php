@@ -47,6 +47,7 @@ class toolKit{
 		echo ("Digita 7 per muovere o rinominare un campo ".PHP_EOL);
 		echo ("Digita 8 per resettare il cron ".PHP_EOL);
 		echo ("Digita 9 per eseguire del codice SQL ".PHP_EOL);
+		echo ("Digita 10 per eliminare tutte le tabelle del DB ".PHP_EOL);
 		return;
 	}
 	
@@ -96,6 +97,9 @@ class toolKit{
 			case 9:
 						$this->runSqlCode();
 						break;
+			case 10:
+						$this->generateTruncate();
+						break;
 						
 						
 						
@@ -107,6 +111,28 @@ class toolKit{
 		}
 	}
 	
+	
+	
+	protected function generateTruncate(){
+		$db = $this->dbconfig['db_name'];
+		echo ("PREPARAZIONE SCRIPT PER ELIMINARE TUTTE LE TABELLE DAL DATABASE: {$db}".PHP_EOL);
+		$file = "toolkit/droptablefrom_{$db}.sql";
+		@unlink ($file);
+		$truncate = "SELECT 'SET FOREIGN_KEY_CHECKS = 0;' as schemaresult 
+					union
+					SELECT
+						CONCAT('DROP TABLE  ', '{$db}','.',TABLE_NAME,';')
+
+					FROM
+						information_schema.tables
+
+					WHERE
+						table_schema = '{$db}'
+					UNION
+					SELECT 'SET FOREIGN_KEY_CHECKS = 1'";
+		file_put_contents($file, $truncate);
+		$this->endFunction();
+	}
 	
 	
 	
