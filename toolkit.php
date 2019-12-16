@@ -1,6 +1,14 @@
 <?php
 
+$r1 = getcwd();
 chdir('..');
+$r2 = getcwd();
+
+
+$root = str_replace($r2.'/','',$r1);
+
+
+
 include_once 'config.inc.php' ;
 include_once 'vtlib/Vtiger/Module.php';
 include_once 'modules/Users/Users.php';
@@ -20,7 +28,9 @@ echo ("WELCOME TO ALGOMA TOOLKIT".PHP_EOL);
 echo ("PER USCIRE PREMI CNTR+C".PHP_EOL);
 echo ("SELEZIONA COSA VUOI FARE".PHP_EOL);
 
-$a = new toolKit($dbconfig);
+
+
+$a = new toolKit($dbconfig, $root);
 $a->selectValue();
 
 
@@ -29,25 +39,28 @@ class toolKit{
 	protected $dbconfig;
 	protected $adb;
 	
+	protected $root;
 	
-	function __construct($dbconfig){
+	
+	function __construct($dbconfig, $root){
 		$this->dbconfig = $dbconfig;
 		global $adb;
 		$this->db = $adb;
+		$this->root = $root;
 	}
 	
 	
 	protected static function option(){
-		echo ("Digita 1 per effetturare il Backup del database                                  ".PHP_EOL);
-		echo ("Digita 2 per effetturare il salvataggio dei filtri                               ".PHP_EOL);
-		echo ("Digita 3 per effetturare il salvataggio dei workflow                             ".PHP_EOL);
-		echo ("Digita 4 per effetturare il salvataggio delle routine (function e procedure)     ".PHP_EOL);
-		echo ("Digita 5 per effetturare il salvataggio delle viste                              ".PHP_EOL);
-		echo ("Digita 6 per effetturare il salvataggio degli eventi                             ".PHP_EOL);
-		echo ("Digita 7 per muovere o rinominare un campo                                       ".PHP_EOL);
-		echo ("Digita 8 per resettare il cron                                                   ".PHP_EOL);
-		echo ("Digita 9 per eseguire del codice SQL                                             ".PHP_EOL);
-		echo ("Digita 10 per eliminare tutte le tabelle del DB                                  ".PHP_EOL);
+		echo ("Digita 1 per effetturare il Backup del database ".PHP_EOL);
+		echo ("Digita 2 per effetturare il salvataggio dei filtri ".PHP_EOL);
+		echo ("Digita 3 per effetturare il salvataggio dei workflow ".PHP_EOL);
+		echo ("Digita 4 per effetturare il salvataggio delle routine (function e procedure) ".PHP_EOL);
+		echo ("Digita 5 per effetturare il salvataggio delle viste ".PHP_EOL);
+		echo ("Digita 6 per effetturare il salvataggio degli eventi ".PHP_EOL);
+		echo ("Digita 7 per muovere o rinominare un campo ".PHP_EOL);
+		echo ("Digita 8 per resettare il cron ".PHP_EOL);
+		echo ("Digita 9 per eseguire del codice SQL ".PHP_EOL);
+		echo ("Digita 10 per eliminare tutte le tabelle del DB ".PHP_EOL);
 		return;
 	}
 	
@@ -86,11 +99,11 @@ class toolKit{
 						$this->importViste(); 
 						break;
 			case 6 : 	
-                                                $this->importEvent(); 
-                                                break;
+									$this->importEvent(); 
+									break;
 			case 7 : 	
-                                                $this->mvField(); 
-                                                break;
+									$this->mvField(); 
+									break;
 			case 8:
 						$this->resetCron();
 						break;
@@ -116,8 +129,8 @@ class toolKit{
 	protected function generateTruncate(){
 		$db = $this->dbconfig['db_name'];
 		echo ("PREPARAZIONE SCRIPT PER ELIMINARE TUTTE LE TABELLE DAL DATABASE: {$db}".PHP_EOL);
-		$file = "toolkit/droptablefrom_{$db}.sql";
-		@unlink($file);
+		$file = "{$this->root}/droptablefrom_{$db}.sql";
+		@unlink ($file);
 		$truncate = "SELECT 'SET FOREIGN_KEY_CHECKS = 0;' as schemaresult 
 					union
 					SELECT
@@ -149,7 +162,7 @@ class toolKit{
 		$file = trim(fgets(STDIN));
 		
 		
-		$sql = file_get_contents('toolkit/'.$file);
+		$sql = file_get_contents("{$this->root}/".$file);
 		// Check connection
 		
 		
@@ -168,7 +181,7 @@ class toolKit{
 	
 	
 	protected function mvField(){
-            $file = 'toolkit/mvrnField.txt';
+            $file = "{$this->root}/mvrnField.txt";
             @unlink($file);
             echo ("INSERISCI NOME DEL DB IN CUI VERRANNO FATTE LE OPERAZIONI".PHP_EOL);
             $db = trim(fgets(STDIN));
@@ -207,7 +220,7 @@ class toolKit{
 		
 		$date = date('Ymd_His');
 		echo ("INSERISCI NOME FILE DOVE VERRÀ SALVATO IL FILE es backup ##Non mettere Estensioni##".PHP_EOL);
-        $file ='toolkit/'. trim(fgets(STDIN)).$date.'.sql';
+        $file ="{$this->root}/". trim(fgets(STDIN)).$date.'.sql';
 		
 		echo ("DIGITA 1 PER SALVARE IL BACKUP IN FORMATO ZIP".PHP_EOL);
         $zip = trim(fgets(STDIN));
@@ -248,6 +261,9 @@ class toolKit{
 	
 	
 	protected function generateFilter(){
+		
+		$file = "{$this->root}/insertFiltri.txt";
+		@unlink($file);
 		$tables = array ('vtiger_customview', 'vtiger_cvadvfilter', 'vtiger_cvadvfilter_grouping', 'vtiger_cvcolumnlist', 'vtiger_cvstdfilter');
 		echo ("INSERISCI L'ID DEL FILTRO DI ORIGINE".PHP_EOL);
 		$cvidfr = trim(fgets(STDIN));
@@ -257,7 +273,7 @@ class toolKit{
 		foreach ($tables as $table){
 			$query .= $this->makeRecoveryFilterSQL($table, $cvidfr, $cvidto);
 		}
-		$result = file_put_contents("toolkit/insertFiltri.txt", $query.PHP_EOL, FILE_APPEND);
+		$result = file_put_contents($file, $query.PHP_EOL, FILE_APPEND);
 		if ($result){
 			echo ("FILTRI SALVATI NEL FILE insertFiltri.txt".PHP_EOL);
 		}
@@ -305,7 +321,8 @@ class toolKit{
 	
 	
 	protected function generateWorkflow(){
-		
+		$file = "{$this->root}/insertWorkflow.txt";
+		@unlink($file);
 		$tables = array (
 						'com_vtiger_workflows'
 						,'com_vtiger_workflowtasks'
@@ -320,7 +337,7 @@ class toolKit{
 		foreach ($tables as $table){
 			$query .= $this->makeRecoveryWorkflowSQL($table, $cvidfr, $cvidto);
 		}
-		$result = file_put_contents("toolkit/insertWorkflow.txt", $query.PHP_EOL, FILE_APPEND);
+		$result = file_put_contents($file, $query.PHP_EOL, FILE_APPEND);
 		if ($result){
 			echo ("WORKFLOW SALVATI NEL FILE insertWorkflow.txt".PHP_EOL);
 		}
@@ -439,7 +456,7 @@ class toolKit{
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
 		$input = '1';*/
-		$file = 'toolkit/'.$dbdst.'.routines.sql';
+		$file = $this->root.'/'.$dbdst.'.routines.sql';
 		@unlink($file);
 		
 		if($input == 2){
@@ -605,7 +622,7 @@ class toolKit{
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
 		$input = '1';*/
-		$file = 'toolkit/'.$dbdst.'.views.sql';
+		$file = $this->root.'/'.$dbdst.'.views.sql';
 		@unlink($file);
 		
 		if($input == 2){
@@ -701,7 +718,7 @@ class toolKit{
 		$dbsrc = 'atalanta_starter';
 		$dbdst = 'atalanta_demosta';
 		$input = '1';*/
-		$file  = 'toolkit/'.$dbdst.'.events.sql';
+		$file  = $this->root.'/'.$dbdst.'.events.sql';
 		@unlink($file);
 		
 		if($input == 2){
