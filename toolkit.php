@@ -38,16 +38,16 @@ class toolKit{
 	
 	
 	protected static function option(){
-		echo ("Digita 1 per effetturare il Backup del database ".PHP_EOL);
-		echo ("Digita 2 per effetturare il salvataggio dei filtri ".PHP_EOL);
-		echo ("Digita 3 per effetturare il salvataggio dei workflow ".PHP_EOL);
-		echo ("Digita 4 per effetturare il salvataggio delle routine (function e procedure) ".PHP_EOL);
-		echo ("Digita 5 per effetturare il salvataggio delle viste ".PHP_EOL);
-		echo ("Digita 6 per effetturare il salvataggio degli eventi ".PHP_EOL);
-		echo ("Digita 7 per muovere o rinominare un campo ".PHP_EOL);
-		echo ("Digita 8 per resettare il cron ".PHP_EOL);
-		echo ("Digita 9 per eseguire del codice SQL ".PHP_EOL);
-		echo ("Digita 10 per eliminare tutte le tabelle del DB ".PHP_EOL);
+		echo ("Digita 1 per effetturare il Backup del database                                  ".PHP_EOL);
+		echo ("Digita 2 per effetturare il salvataggio dei filtri                               ".PHP_EOL);
+		echo ("Digita 3 per effetturare il salvataggio dei workflow                             ".PHP_EOL);
+		echo ("Digita 4 per effetturare il salvataggio delle routine (function e procedure)     ".PHP_EOL);
+		echo ("Digita 5 per effetturare il salvataggio delle viste                              ".PHP_EOL);
+		echo ("Digita 6 per effetturare il salvataggio degli eventi                             ".PHP_EOL);
+		echo ("Digita 7 per muovere o rinominare un campo                                       ".PHP_EOL);
+		echo ("Digita 8 per resettare il cron                                                   ".PHP_EOL);
+		echo ("Digita 9 per eseguire del codice SQL                                             ".PHP_EOL);
+		echo ("Digita 10 per eliminare tutte le tabelle del DB                                  ".PHP_EOL);
 		return;
 	}
 	
@@ -86,11 +86,11 @@ class toolKit{
 						$this->importViste(); 
 						break;
 			case 6 : 	
-									$this->importEvent(); 
-									break;
+                                                $this->importEvent(); 
+                                                break;
 			case 7 : 	
-									$this->mvField(); 
-									break;
+                                                $this->mvField(); 
+                                                break;
 			case 8:
 						$this->resetCron();
 						break;
@@ -117,7 +117,7 @@ class toolKit{
 		$db = $this->dbconfig['db_name'];
 		echo ("PREPARAZIONE SCRIPT PER ELIMINARE TUTTE LE TABELLE DAL DATABASE: {$db}".PHP_EOL);
 		$file = "toolkit/droptablefrom_{$db}.sql";
-		@unlink ($file);
+		@unlink($file);
 		$truncate = "SELECT 'SET FOREIGN_KEY_CHECKS = 0;' as schemaresult 
 					union
 					SELECT
@@ -240,7 +240,7 @@ class toolKit{
 			exec($cmd);
 
 			echo "DONE" . PHP_EOL;
-file_put_contents('prova.txt', $cmd);
+// file_put_contents('prova.txt', $cmd);
 			$this->endFunction();
         }
 	
