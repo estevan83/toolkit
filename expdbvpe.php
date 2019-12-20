@@ -37,16 +37,42 @@ if (count($argv) != 6){
 }
 
 
-@unlink ($dbdst.'.routines.sql');
-@unlink ($dbdst.'.views.sql');
-@unlink ($dbdst.'.events.sql');
+
 // Create connection
 $conn = new mysqli($host, $user, $pass);
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+$definer = $user.'@'.$host;
 
+$sql = "SELECT COUNT(*) as count FROM information_schema.VIEWS WHERE TABLE_SCHEMA = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$result = $conn->query($sql);
+$row = $result->fetch_assoc(); 
+if($row['count'] > 0){
+    die ($row['count'] . " VIEWS invalid definer expected($definer)");
+}
+
+$sql = "SELECT COUNT(*) as count FROM information_schema.routines WHERE routine_schema = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$result = $conn->query($sql);
+$row = $result->fetch_assoc(); 
+if($row['count'] > 0){
+    die ($row['count'] . " ROUTINES invalid definer expected($definer)");
+}
+
+
+$sql = "SELECT COUNT(*) as count FROM information_schema.EVENTS WHERE EVENT_SCHEMA = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$result = $conn->query($sql);
+$row = $result->fetch_assoc(); 
+if($row['count'] > 0){
+    die ($row['count'] . " EVENTS invalid definer expected($definer)");
+}
+
+
+
+@unlink ($dbdst.'.routines.sql');
+@unlink ($dbdst.'.views.sql');
+@unlink ($dbdst.'.events.sql');
 $sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' ;";
 // and (routine_name = 'html_UnEncode' or routine_name ='update_synchro_maps')
 $result = $conn->query($sql);

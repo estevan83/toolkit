@@ -1,6 +1,6 @@
 <?php
 
-/* eseguio questa query e creo lo script */
+/* eseguio questa query e creo lo script 
 
 SET @dbname = 'vtigerdb';
 
@@ -16,3 +16,4 @@ WHERE
 UNION
 SELECT 'SET FOREIGN_KEY_CHECKS = 1;
 
+*/
