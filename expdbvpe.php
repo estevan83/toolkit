@@ -46,14 +46,14 @@ if ($conn->connect_error) {
 }
 $definer = $user.'@'.$host;
 
-$sql = "SELECT COUNT(*) as count FROM information_schema.VIEWS WHERE TABLE_SCHEMA = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$sql = "SELECT COUNT(*) as count FROM information_schema.VIEWS WHERE TABLE_SCHEMA = '{$dbsrc}' AND DEFINER != '{$definer}'";
 $result = $conn->query($sql);
 $row = $result->fetch_assoc(); 
 if($row['count'] > 0){
     die ($row['count'] . " VIEWS invalid definer expected($definer)");
 }
 
-$sql = "SELECT COUNT(*) as count FROM information_schema.routines WHERE routine_schema = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$sql = "SELECT COUNT(*) as count FROM information_schema.routines WHERE routine_schema = '{$dbsrc}' AND DEFINER != '{$definer}'";
 $result = $conn->query($sql);
 $row = $result->fetch_assoc(); 
 if($row['count'] > 0){
@@ -61,7 +61,7 @@ if($row['count'] > 0){
 }
 
 
-$sql = "SELECT COUNT(*) as count FROM information_schema.EVENTS WHERE EVENT_SCHEMA = '{$dbsrc}' AND DEFINER = '{$definer}'";
+$sql = "SELECT COUNT(*) as count FROM information_schema.EVENTS WHERE EVENT_SCHEMA = '{$dbsrc}' AND DEFINER != '{$definer}'";
 $result = $conn->query($sql);
 $row = $result->fetch_assoc(); 
 if($row['count'] > 0){
