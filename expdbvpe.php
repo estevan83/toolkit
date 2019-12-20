@@ -69,10 +69,46 @@ if($row['count'] > 0){
 }
 
 
-
+@unlink ($dbdst.'.dataschema.sql');
 @unlink ($dbdst.'.routines.sql');
 @unlink ($dbdst.'.views.sql');
 @unlink ($dbdst.'.events.sql');
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+echo "Create dataschema files....". PHP_EOL;
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+$sql = "
+
+SELECT 'SET FOREIGN_KEY_CHECKS = 0;' as schemaresult 
+UNION 
+SELECT CONCAT('DROP TABLE IF EXISTS ','$dbdst','.',TABLE_NAME,';') AS dropstmt
+FROM information_schema.tables
+WHERE table_schema = '$dbsrc' AND TABLE_TYPE ='BASE TABLE'
+UNION
+SELECT 'SET FOREIGN_KEY_CHECKS = 1;'
+  
+     
+UNION
+
+SELECT CONCAT('CREATE TABLE ','$dbdst','.',TABLE_NAME,' LIKE ', '$dbsrc','.',TABLE_NAME,';') AS createstmt
+FROM information_schema.tables
+WHERE table_schema = '$dbsrc' AND TABLE_TYPE ='BASE TABLE'
+
+UNION
+SELECT CONCAT('INSERT INTO  ','$dbdst','.',TABLE_NAME,' SELECT * FROM ','$dbsrc','.',TABLE_NAME,';') AS insertstmt
+FROM information_schema.tables 
+WHERE table_schema = '$dbsrc'  AND TABLE_TYPE ='BASE TABLE';
+";
+
+$result = $conn->query($sql);
+while($row = $result->fetch_assoc()) {
+	$schema .= $row['schemaresult'] . PHP_EOL;
+}
+file_put_contents($dbdst.'.dataschema.sql', $schema .PHP_EOL, FILE_APPEND);
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+echo "Create routines files....". PHP_EOL;
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 $sql = "select routine_name, routine_type, routine_schema, routine_definition from information_schema.routines where routine_schema = '".$dbsrc."' ;";
 // and (routine_name = 'html_UnEncode' or routine_name ='update_synchro_maps')
 $result = $conn->query($sql);
@@ -155,9 +191,12 @@ if ($result->num_rows > 0) {
     }
 } 
 else{
-	die("no rows");
+	//die("no rows");
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+echo "Create views files....". PHP_EOL;
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 $sql = "SELECT REPLACE(CONCAT('DROP VIEW IF EXISTS ', '$dbdst.', TABLE_NAME, ';\n!_!_!CREATE VIEW ', '$dbdst.', TABLE_NAME,' AS ', view_definition, ';') , '$dbsrc', '$dbdst') as vista FROM information_schema.views where TABLE_SCHEMA ='".$dbsrc."'";
 $res = $conn->query($sql);
 
@@ -180,6 +219,9 @@ if ($res->num_rows > 0) {
 }
 
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+echo "Create events files....". PHP_EOL;
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 $sql = "SELECT CONCAT('DROP EVENT if EXISTS ', '$dbdst.',event_name, ';\n!_!_!CREATE EVENT ','$dbdst.',event_name, '\nON SCHEDULE EVERY ',interval_value,' ',interval_field,'\n DO \n',event_definition,';') as event FROM information_schema.events";
 $res = $conn->query($sql);
 if ($res->num_rows > 0) {
