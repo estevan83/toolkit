@@ -1,0 +1,4 @@
+UPDATE atalanta_crm.vtiger_field SET columnname='nn_attivo', tablename='vtiger_contactscf', fieldname='nn_attivo' WHERE columnname='cf_1661' and tablename='vtiger_contactscf';
+ALTER TABLE atalanta_crm.vtiger_contactscf ADD COLUMN nn_attivo varchar(3);
+UPDATE atalanta_crm.vtiger_contactscf INNER JOIN atalanta_crm.vtiger_contactscf ON vtiger_contactscf.contactid = vtiger_contactscf.contactid SET vtiger_contactscf.nn_attivo = vtiger_contactscf.cf_1661;
+ALTER TABLE atalanta_crm.vtiger_contactscf DROP COLUMN cf_1661;

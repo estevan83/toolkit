@@ -221,10 +221,11 @@ class toolKit{
 
             $query .= "ALTER TABLE {$db}.{$tableDST} ADD COLUMN {$fieldDST} {$typeOfData};".PHP_EOL;
 
-            $query .= "UPDATE {$db}.{$tableDST} INNER JOIN {$db}.{$tableSRC} ON {$tableDST}.{$keyDST} = {$tableSRC}.{$keySRC} SET {$tableDST}.{$fieldDST} = {$tableSRC}.{$fieldSRC};".PHP_EOL;
+            $query .= "UPDATE {$db}.{$tableDST} AS a INNER JOIN {$db}.{$tableSRC} AS B ON A.{$keyDST} = B.{$keySRC} SET A.{$fieldDST} = B.{$fieldSRC};".PHP_EOL;
 
             $query .= "ALTER TABLE {$db}.{$tableSRC} DROP COLUMN {$fieldSRC};".PHP_EOL;
             
+            $file = "$this->root/$fieldDST.sql";
             file_put_contents($file, $query);
 	
             $this->endFunction();

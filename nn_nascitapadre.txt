@@ -1,0 +1,4 @@
+UPDATE atalanta_crm.vtiger_field SET columnname='nn_nascitapadre', tablename='vtiger_contactscf', fieldname='nn_nascitapadre' WHERE columnname='cf_1601' and tablename='vtiger_contactscf';
+ALTER TABLE atalanta_crm.vtiger_contactscf ADD COLUMN nn_nascitapadre date;
+UPDATE atalanta_crm.vtiger_contactscf INNER JOIN atalanta_crm.vtiger_contactscf ON vtiger_contactscf.contactid = vtiger_contactscf.contactid SET vtiger_contactscf.nn_nascitapadre = vtiger_contactscf.cf_1601;
+ALTER TABLE atalanta_crm.vtiger_contactscf DROP COLUMN cf_1601;
