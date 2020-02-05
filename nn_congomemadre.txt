@@ -1,4 +1,0 @@
-UPDATE atalanta_crm.vtiger_field SET columnname='nn_cognomemadre', tablename='vtiger_contactscf', fieldname='nn_cognomemadre' WHERE columnname='cf_1599' and tablename='vtiger_contactscf';
-ALTER TABLE atalanta_crm.vtiger_contactscf ADD COLUMN nn_cognomemadre varchar(255);
-UPDATE atalanta_crm.vtiger_contactscf INNER JOIN atalanta_crm.vtiger_contactscf ON vtiger_contactscf.contactid = vtiger_contactscf.contactid SET vtiger_contactscf.nn_cognomemadre = vtiger_contactscf.cf_1599;
-ALTER TABLE atalanta_crm.vtiger_contactscf DROP COLUMN cf_1599;
