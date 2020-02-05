@@ -200,34 +200,63 @@ class toolKit{
 	protected function mvField(){
             $file = "{$this->root}/mvrnField.txt";
             @unlink($file);
+            $firsttime = true;
             echo ("INSERISCI NOME DEL DB IN CUI VERRANNO FATTE LE OPERAZIONI".PHP_EOL);
             $db = trim(fgets(STDIN));
-            echo ("INSERISCI NOME DEL CAMPO DA SPOSTARE".PHP_EOL);
-            $fieldSRC = trim(fgets(STDIN));
-            echo ("INSERISCI IL TIPO DI DATO DEL CAMPO".PHP_EOL);
-            $typeOfData = trim(fgets(STDIN));
             echo ("INSERISCI NOME DELLA TABELLA DOVE SI TROVA IL CAMPO".PHP_EOL);
             $tableSRC = trim(fgets(STDIN));
             echo ("INSERISCI IL CAMPO UNIVOCO DELA TABELLA SORGENTE".PHP_EOL);
             $keySRC = trim(fgets(STDIN));
-            echo ("INSERISCI NOME CHE AVRÀ IL CAMPO".PHP_EOL);
-            $fieldDST = trim(fgets(STDIN));
             echo ("INSERISCI NOME DELLA TABELLA DOVE VERRÀ CREATO IL CAMPO".PHP_EOL);
             $tableDST = trim(fgets(STDIN));
             echo ("INSERISCI IL CAMPO UNIVOCO DELA TABELLA DI DESTINAZIONE".PHP_EOL);
             $keyDST = trim(fgets(STDIN));
+            do{
+            $picklist = false;
+            echo ("INSERISCI NOME DEL CAMPO DA SPOSTARE".PHP_EOL);
+            $fieldSRC = trim(fgets(STDIN));
+            echo ("INSERISCI IL TIPO DI DATO DEL CAMPO".PHP_EOL);
+            $typeOfData = trim(fgets(STDIN));
+            if (strtolower($typeOfData) == 'picklist'){
+                $typeOfData = 'varchar(200)';
+                $picklist = true;
+            }
+            echo ("INSERISCI NOME CHE AVRÀ IL CAMPO".PHP_EOL);
+            $fieldDST = trim(fgets(STDIN));
             
             $query = "UPDATE {$db}.vtiger_field SET columnname='{$fieldDST}', tablename='{$tableDST}', fieldname='{$fieldDST}' WHERE columnname='{$fieldSRC}' and tablename='{$tableSRC}';".PHP_EOL;
 
             $query .= "ALTER TABLE {$db}.{$tableDST} ADD COLUMN {$fieldDST} {$typeOfData};".PHP_EOL;
 
-            $query .= "UPDATE {$db}.{$tableDST} AS a INNER JOIN {$db}.{$tableSRC} AS B ON A.{$keyDST} = B.{$keySRC} SET A.{$fieldDST} = B.{$fieldSRC};".PHP_EOL;
+            $query .= "UPDATE {$db}.{$tableDST} AS a INNER JOIN {$db}.{$tableSRC} AS b ON a.{$keyDST} = b.{$keySRC} SET a.{$fieldDST} = b.{$fieldSRC};".PHP_EOL;
 
             $query .= "ALTER TABLE {$db}.{$tableSRC} DROP COLUMN {$fieldSRC};".PHP_EOL;
             
-            $file = "$this->root/$fieldDST.sql";
+            if ($picklist){
+                $query .= " /*è una picklist*/ ".PHP_EOL;
+
+                $query .= "ALTER TABLE {$db}.vtiger_{$fieldSRC} CHANGE {$fieldSRC}id {$fieldDST}id int(11);".PHP_EOL;
+
+                $query .= "ALTER TABLE {$db}.vtiger_{$fieldSRC} CHANGE {$fieldSRC} {$fieldDST} varchar(200);".PHP_EOL;
+
+                $query .= "RENAME TABLE {$db}.vtiger_{$fieldSRC} TO {$db}.vtiger_{$fieldDST};".PHP_EOL;
+
+                $query .= "RENAME TABLE {$db}.vtiger_{$fieldSRC}_seq TO {$db}.vtiger_{$fieldDST}_seq;".PHP_EOL;
+            }
+            
+            
+            $folder = $db;
+            if (!file_exists("$this->root/$folder")) {
+                mkdir("$this->root/$folder", 0777, true);
+            }
+            $file = "$this->root/$folder/$fieldDST.sql";
             file_put_contents($file, $query);
-	
+            echo ("PER RIUTILIZZARE QUESTI CAMPI DIGITA 1 ALTRIMENTI DIGITA QUALCOS'ALTRO".PHP_EOL);
+            $reuse = trim(fgets(STDIN));
+            if ($reuse != 1){
+                $firsttime = false;
+            }
+            }while($firsttime == true);
             $this->endFunction();
         }
 	
