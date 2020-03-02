@@ -1,4 +1,0 @@
-UPDATE fieldSRC.vtiger_field SET columnname='fieldDST', tablename='vtiger_products', fieldname='fieldDST' WHERE columnname='fieldSRC' and tablename='vtiger_productscf';
-ALTER TABLE fieldSRC.vtiger_products ADD COLUMN fieldDST int(10);
-UPDATE fieldSRC.vtiger_products INNER JOIN fieldSRC.vtiger_productscf ON vtiger_products.productid = vtiger_productscf.productid SET vtiger_products.fieldDST = vtiger_productscf.fieldSRC;
-ALTER TABLE fieldSRC.vtiger_productscf DROP COLUMN fieldSRC;
