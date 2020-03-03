@@ -1,4 +1,5 @@
 <?php
+die("UTILIZZARE FILE imapTest.php");
 // phpinfo();
 // die();
 /* connect to gmail */
