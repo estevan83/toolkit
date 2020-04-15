@@ -9,7 +9,7 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 ini_set("display_errors", 1);
 
 
-// INPUT: user, password, dbSrc, dbDst
+// INPUT: user, password, dbSrc, dbDst, module
 
 
 $user  = $argv[1];
@@ -34,12 +34,12 @@ if ($dbSrcConn->connect_error) {
 global $dbSrcConn;
 
 
-$dbDstConn = new mysqli('localhost', $user, $pass, $dbSrc);
+$dbDstConn = new mysqli('localhost', $user, $pass, $dbDst);
 // Check connection
 if ($dbDstConn->connect_error) {
     die("Connection failed: " . $dbDstConn->connect_error);
 }
-$result = $dbSrcConn->query("SELECT id+1 as id FROM vtiger_customview_seq LIMIT 0,1");
+$result = $dbDstConn->query("SELECT id+1 as id FROM vtiger_customview_seq LIMIT 0,1");
 $row = $result->fetch_assoc();
 $cvidTo = $row['id'];
 
